@@ -39,9 +39,9 @@ jobs:
           echo "Latest upstream release tag: $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
 
-          # Check if tag is merged in current stable branch
-          if git merge-base --is-ancestor "$LATEST_TAG" stable 2>/dev/null; then
-            echo "Tag $LATEST_TAG is already included in stable."
+          # Check if tag is merged in current main branch
+          if git merge-base --is-ancestor "$LATEST_TAG" main 2>/dev/null; then
+            echo "Tag $LATEST_TAG is already included in main."
             echo "NEW_RELEASE=false" >> "$GITHUB_ENV"
           else
             echo "New release tag found: $LATEST_TAG"
@@ -52,16 +52,16 @@ jobs:
         if: env.NEW_RELEASE == 'true'
         run: |
           SYNC_BRANCH="sync-${LATEST_TAG}"
-          git checkout -b "$SYNC_BRANCH" stable
+          git checkout -b "$SYNC_BRANCH" main
           git merge "$LATEST_TAG" --no-edit -m "Release Sync: Merge official Sonarr ${LATEST_TAG}" || true
           git push origin "$SYNC_BRANCH" --force
 
           # Open Pull Request via GitHub CLI
           gh pr create \
-            --base stable \
+            --base main \
             --head "$SYNC_BRANCH" \
             --title "Release Sync: Sonarr ${LATEST_TAG}" \
-            --body "Official Sonarr release tag \`${LATEST_TAG}\` was detected. Merge this Pull Request to update your \`stable\` branch with the latest upstream stable code." \
+            --body "Official Sonarr release tag \`${LATEST_TAG}\` was detected. Merge this Pull Request to update your \`main\` branch with the latest upstream stable code." \
             || echo "PR may already exist."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

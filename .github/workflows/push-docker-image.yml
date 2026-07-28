@@ -9,7 +9,7 @@ on:
       branch:
         description: 'Branch name the release is built from'
         required: true
-        default: stable
+        default: main
 
 jobs:
   build:
@@ -44,7 +44,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ inputs.version }}
-            type=raw,value=latest,enable=${{ inputs.branch == 'stable' }}
+            type=raw,value=latest,enable=${{ inputs.branch == 'main' }}
             type=raw,value=${{ inputs.branch }}
 
       - name: Build and push
