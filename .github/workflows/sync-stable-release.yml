@@ -1,0 +1,67 @@
+name: Sync Official Sonarr Release
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream releases & tags
+        run: |
+          git remote add upstream https://github.com/Sonarr/Sonarr.git || true
+          git fetch upstream --tags
+
+      - name: Check for new release tag
+        id: sync
+        run: |
+          LATEST_TAG=$(curl -s https://api.github.com/repos/Sonarr/Sonarr/releases/latest | jq -r '.tag_name // empty')
+          if [ -z "$LATEST_TAG" ]; then
+            echo "Could not fetch latest release tag from Sonarr/Sonarr."
+            exit 0
+          fi
+          echo "Latest upstream release tag: $LATEST_TAG"
+          echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
+
+          # Check if tag is merged in current stable branch
+          if git merge-base --is-ancestor "$LATEST_TAG" stable 2>/dev/null; then
+            echo "Tag $LATEST_TAG is already included in stable."
+            echo "NEW_RELEASE=false" >> "$GITHUB_ENV"
+          else
+            echo "New release tag found: $LATEST_TAG"
+            echo "NEW_RELEASE=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create Sync Branch and Open PR
+        if: env.NEW_RELEASE == 'true'
+        run: |
+          SYNC_BRANCH="sync-${LATEST_TAG}"
+          git checkout -b "$SYNC_BRANCH" stable
+          git merge "$LATEST_TAG" --no-edit -m "Release Sync: Merge official Sonarr ${LATEST_TAG}" || true
+          git push origin "$SYNC_BRANCH" --force
+
+          # Open Pull Request via GitHub CLI
+          gh pr create \
+            --base stable \
+            --head "$SYNC_BRANCH" \
+            --title "Release Sync: Sonarr ${LATEST_TAG}" \
+            --body "Official Sonarr release tag \`${LATEST_TAG}\` was detected. Merge this Pull Request to update your \`stable\` branch with the latest upstream stable code." \
+            || echo "PR may already exist."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
