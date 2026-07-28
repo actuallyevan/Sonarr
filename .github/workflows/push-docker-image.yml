@@ -27,6 +27,25 @@ jobs:
           VERSION=$(grep -oP '(?<=VERSION: ).*' .github/workflows/build.yml | head -n 1)
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Node.js (Volta)
+        uses: volta-cli/action@v4
+
+      - name: Yarn Install
+        run: yarn install
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+
+      - name: Compile Backend & Frontend Packages
+        run: |
+          # Build UI and musl-x64 backend binaries
+          ./build.sh --backend --frontend --packages -f net6.0 -r linux-musl-x64
+          # Build musl-arm64 backend binaries (reuses UI build)
+          ./build.sh --backend --packages -f net6.0 -r linux-musl-arm64
+        env:
+          SONARR_VERSION: ${{ steps.get_version.outputs.VERSION }}
+          BRANCH: ${{ inputs.branch }}
+
       - name: Set Build Date
         shell: bash
         run: echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
