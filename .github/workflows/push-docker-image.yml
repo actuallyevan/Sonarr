@@ -24,7 +24,7 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          VERSION=$(grep -oP '(?<=VERSION: ).*' .github/workflows/build.yml | head -n 1)
+          VERSION=$(grep -E '^\s*VERSION:' .github/workflows/build.yml | awk '{print $2}')
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js (Volta)
