@@ -117,5 +117,6 @@ jobs:
           artifact: tests-linux-x64
           pattern: Sonarr.*.Test.dll
           filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory=IntegrationTest
+          integration_tests: true
           binary_artifact: build_linux
           binary_path: linux-x64/${{ needs.build.outputs.framework }}/Sonarr
