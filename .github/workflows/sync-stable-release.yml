@@ -52,8 +52,7 @@ jobs:
         if: env.NEW_RELEASE == 'true'
         run: |
           SYNC_BRANCH="sync-${LATEST_TAG}"
-          git checkout -b "$SYNC_BRANCH" main
-          git merge "$LATEST_TAG" --no-edit -m "Release Sync: Merge official Sonarr ${LATEST_TAG}" || true
+          git checkout -b "$SYNC_BRANCH" "$LATEST_TAG"
           git push origin "$SYNC_BRANCH" --force
 
           # Open Pull Request via GitHub CLI
