@@ -70,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build_linux
-          path: _artifacts
+          path: _artifacts/linux-*/**/*
 
   unit_test:
     needs: build
