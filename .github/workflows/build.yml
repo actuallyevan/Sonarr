@@ -70,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build_linux
-          path: _artifacts/linux-*/**/*
+          path: _artifacts/linux-x64/net6.0/Sonarr
 
   unit_test:
     needs: build
@@ -118,4 +118,4 @@ jobs:
           pattern: Sonarr.*.Test.dll
           filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory=IntegrationTest
           binary_artifact: build_linux
-          binary_path: linux-x64/${{ needs.build.outputs.framework }}/Sonarr
+          binary_path: Sonarr
