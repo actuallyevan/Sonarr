@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -46,7 +48,8 @@ jobs:
         id: variables
         shell: bash
         run: |
-          SONARR_VERSION="${{ env.VERSION }}.$((${{ github.run_number }}+800))"
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0.0")
+          SONARR_VERSION="${TAG#v}"
           DOTNET_VERSION=$(jq -r '.sdk.version' global.json)
 
           echo "SDK_PATH=${{ env.DOTNET_ROOT }}/sdk/${DOTNET_VERSION}" >> "$GITHUB_ENV"
