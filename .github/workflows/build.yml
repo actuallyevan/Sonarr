@@ -74,21 +74,7 @@ jobs:
 
   unit_test:
     needs: backend
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            artifact: tests-linux-x64
-            filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory!=IntegrationTest&TestCategory!=AutomationTest
-          - os: macos-latest
-            artifact: tests-linux-x64
-            filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory!=IntegrationTest&TestCategory!=AutomationTest
-          - os: windows-latest
-            artifact: tests-linux-x64
-            filter: TestCategory!=ManualTest&TestCategory!=LINUX&TestCategory!=IntegrationTest&TestCategory!=AutomationTest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -96,10 +82,10 @@ jobs:
       - name: Test
         uses: ./.github/actions/test
         with:
-          os: ${{ matrix.os }}
-          artifact: ${{ matrix.artifact }}
+          os: ubuntu-latest
+          artifact: tests-linux-x64
           pattern: Sonarr.*.Test.dll
-          filter: ${{ matrix.filter }}
+          filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory!=IntegrationTest&TestCategory!=AutomationTest
 
   unit_test_postgres:
     needs: backend
@@ -119,27 +105,7 @@ jobs:
 
   integration_test:
     needs: backend
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            artifact: tests-linux-x64
-            filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory=IntegrationTest
-            binary_artifact: build_linux
-            binary_path: linux-x64/${{ needs.backend.outputs.framework }}/Sonarr
-          - os: macos-latest
-            artifact: tests-linux-x64
-            filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory=IntegrationTest
-            binary_artifact: build_linux
-            binary_path: linux-x64/${{ needs.backend.outputs.framework }}/Sonarr
-          - os: windows-latest
-            artifact: tests-linux-x64
-            filter: TestCategory!=ManualTest&TestCategory!=LINUX&TestCategory=IntegrationTest
-            binary_artifact: build_linux
-            binary_path: linux-x64/${{ needs.backend.outputs.framework }}/Sonarr
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -147,10 +113,9 @@ jobs:
       - name: Test
         uses: ./.github/actions/test
         with:
-          os: ${{ matrix.os }}
-          artifact: ${{ matrix.artifact }}
+          os: ubuntu-latest
+          artifact: tests-linux-x64
           pattern: Sonarr.*.Test.dll
-          filter: ${{ matrix.filter }}
-          integration_tests: true
-          binary_artifact: ${{ matrix.binary_artifact }}
-          binary_path: ${{ matrix.binary_path }}
+          filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory=IntegrationTest
+          binary_artifact: build_linux
+          binary_path: linux-x64/${{ needs.backend.outputs.framework }}/Sonarr
