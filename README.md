@@ -2,12 +2,12 @@
 
 ## Installation
 
-This fork is designed to be a drop-in replacement for existing Sonarr docker installations. Simply replace your sonarr docker image with `ghcr.io/realzombee/sonarr:develop`
+This fork is designed to be a drop-in replacement for existing Sonarr docker installations. Simply replace your sonarr docker image with `ghcr.io/actuallyevan/sonarr:latest`
 
 Sample docker compose:
 ```docker
 sonarr:
-    image: ghcr.io/realzombee/sonarr:develop
+    image: ghcr.io/actuallyevan/sonarr:latest
     container_name: sonarr
     environment:
       - PUID=1000
