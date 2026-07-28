@@ -3,9 +3,6 @@ name: Push Docker Image
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Sonarr version to publish (e.g., 4.0.19)'
-        required: true
       branch:
         description: 'Branch name the release is built from'
         required: true
@@ -22,6 +19,13 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
+
+      - name: Extract Version
+        id: get_version
+        shell: bash
+        run: |
+          VERSION=$(grep -oP '(?<=VERSION: ).*' .github/workflows/build.yml | head -n 1)
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set Build Date
         shell: bash
@@ -43,7 +47,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ inputs.version }}
+            type=raw,value=${{ steps.get_version.outputs.VERSION }}
             type=raw,value=latest,enable=${{ inputs.branch == 'main' }}
             type=raw,value=${{ inputs.branch }}
 
@@ -58,7 +62,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
-            VERSION=${{ inputs.version }}
+            VERSION=${{ steps.get_version.outputs.VERSION }}
             SONARR_BRANCH=${{ inputs.branch }}
             PACKAGE_AUTHOR=github.com/${{ github.repository }}
             SONARR_REPO=${{ github.repository }}
