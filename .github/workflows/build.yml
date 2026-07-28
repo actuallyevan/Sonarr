@@ -26,7 +26,7 @@ env:
   VERSION: 4.0.19
 
 jobs:
-  backend:
+  build:
     runs-on: ubuntu-latest
     outputs:
       framework: ${{ steps.variables.outputs.framework }}
@@ -73,7 +73,7 @@ jobs:
           path: _artifacts/linux-*/**/*
 
   unit_test:
-    needs: backend
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -88,7 +88,7 @@ jobs:
           filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory!=IntegrationTest&TestCategory!=AutomationTest
 
   unit_test_postgres:
-    needs: backend
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -104,7 +104,7 @@ jobs:
           use_postgres: true
 
   integration_test:
-    needs: backend
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -118,4 +118,4 @@ jobs:
           pattern: Sonarr.*.Test.dll
           filter: TestCategory!=ManualTest&TestCategory!=WINDOWS&TestCategory=IntegrationTest
           binary_artifact: build_linux
-          binary_path: linux-x64/${{ needs.backend.outputs.framework }}/Sonarr
+          binary_path: linux-x64/${{ needs.build.outputs.framework }}/Sonarr
