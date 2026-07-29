@@ -87,4 +87,3 @@ jobs:
             VERSION=${{ steps.get_version.outputs.VERSION }}
             SONARR_BRANCH=${{ inputs.branch }}
             PACKAGE_AUTHOR=github.com/${{ github.repository }}
-            SONARR_REPO=${{ github.repository }}
