@@ -51,18 +51,20 @@ jobs:
           TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0.0")
           SONARR_VERSION="${TAG#v}"
           DOTNET_VERSION=$(jq -r '.sdk.version' global.json)
+          FRAMEWORK=$(git grep -h -m 1 "<TargetFrameworks>" src/NzbDrone.Core/ | sed -e 's/.*<TargetFrameworks>\(.*\)<\/TargetFrameworks>.*/\1/')
 
           echo "SDK_PATH=${{ env.DOTNET_ROOT }}/sdk/${DOTNET_VERSION}" >> "$GITHUB_ENV"
           echo "SONARR_VERSION=$SONARR_VERSION" >> "$GITHUB_ENV"
           echo "BRANCH=${RAW_BRANCH_NAME//\//-}" >> "$GITHUB_ENV"
+          echo "FRAMEWORK=$FRAMEWORK" >> "$GITHUB_ENV"
 
-          echo "framework=${{ env.FRAMEWORK }}" >> "$GITHUB_OUTPUT"
+          echo "framework=$FRAMEWORK" >> "$GITHUB_OUTPUT"
           echo "major_version=${{ env.SONARR_MAJOR_VERSION }}" >> "$GITHUB_OUTPUT"
           echo "version=$SONARR_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build Backend & Frontend
         shell: bash
-        run: ./build.sh --backend --frontend --packages -f net6.0 -r linux-x64
+        run: ./build.sh --backend --frontend --packages -f "${{ env.FRAMEWORK }}" -r linux-x64
 
       - name: Publish linux-x64 Test Artifact
         uses: ./.github/actions/publish-test-artifact

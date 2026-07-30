@@ -3,8 +3,8 @@ ARG BASE_IMAGE=ghcr.io/linuxserver/sonarr:latest
 
 FROM scratch AS binaries
 ARG TARGETARCH
-COPY _artifacts/linux-musl-x64/net6.0/Sonarr /amd64
-COPY _artifacts/linux-musl-arm64/net6.0/Sonarr /arm64
+COPY _artifacts/linux-musl-x64/*/Sonarr /amd64
+COPY _artifacts/linux-musl-arm64/*/Sonarr /arm64
 
 FROM ${BASE_IMAGE}
 
