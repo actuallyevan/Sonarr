@@ -60,7 +60,7 @@ jobs:
           cp -r ../../../_artifacts/win-x86/${{ env.FRAMEWORK }}/Sonarr/* ../../../_output/win-x86/${{ env.FRAMEWORK }}/Sonarr/
 
           export SONARR_VERSION="${{ steps.get_version.outputs.VERSION }}"
-          export SONARR_MAJOR_VERSION="${{ steps.get_version.outputs.VERSION%%.* }}"
+          export SONARR_MAJOR_VERSION="${SONARR_VERSION%%.*}"
           export BRANCH="${{ inputs.branch }}"
           export FRAMEWORK="${{ env.FRAMEWORK }}"
 
