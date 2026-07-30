@@ -43,6 +43,7 @@ jobs:
           global-json-file: global.json
 
       - name: Build All Backend & Frontend Packages
+        shell: bash
         run: ./build.sh --backend --frontend --packages -f "${{ env.FRAMEWORK }}"
         env:
           SONARR_VERSION: ${{ steps.get_version.outputs.VERSION }}
