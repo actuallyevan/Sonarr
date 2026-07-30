@@ -44,10 +44,28 @@ jobs:
 
       - name: Build All Backend & Frontend Packages
         shell: bash
-        run: ./build.sh --backend --frontend --packages --installer -f "${{ env.FRAMEWORK }}"
+        run: ./build.sh --backend --frontend --packages -f "${{ env.FRAMEWORK }}"
         env:
           SONARR_VERSION: ${{ steps.get_version.outputs.VERSION }}
           BRANCH: ${{ inputs.branch }}
+
+      - name: Build Windows Installers
+        working-directory: distribution/windows/setup
+        shell: bash
+        run: |
+          mkdir -p ../../../_output/win-x64/${{ env.FRAMEWORK }}/Sonarr
+          cp -r ../../../_artifacts/win-x64/${{ env.FRAMEWORK }}/Sonarr/* ../../../_output/win-x64/${{ env.FRAMEWORK }}/Sonarr/
+
+          mkdir -p ../../../_output/win-x86/${{ env.FRAMEWORK }}/Sonarr
+          cp -r ../../../_artifacts/win-x86/${{ env.FRAMEWORK }}/Sonarr/* ../../../_output/win-x86/${{ env.FRAMEWORK }}/Sonarr/
+
+          export SONARR_VERSION="${{ steps.get_version.outputs.VERSION }}"
+          export SONARR_MAJOR_VERSION="${{ steps.get_version.outputs.VERSION%%.* }}"
+          export BRANCH="${{ inputs.branch }}"
+          export FRAMEWORK="${{ env.FRAMEWORK }}"
+
+          RUNTIME=win-x64 ./inno/ISCC.exe sonarr.iss
+          RUNTIME=win-x86 ./inno/ISCC.exe sonarr.iss
 
       - name: Install zip tool
         shell: cmd
