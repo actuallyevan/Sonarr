@@ -15,7 +15,7 @@ do
   sonarrFolder="$folderName/Sonarr"
   archiveName="Sonarr.$BRANCH.$SONARR_VERSION.$name"
 
-  if [[ "$name" == 'UI' ]]; then
+  if [ ! -d "$sonarrFolder" ]; then
     continue
   fi
     
