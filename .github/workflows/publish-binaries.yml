@@ -44,10 +44,14 @@ jobs:
 
       - name: Build All Backend & Frontend Packages
         shell: bash
-        run: ./build.sh --backend --frontend --packages -f "${{ env.FRAMEWORK }}"
+        run: ./build.sh --backend --frontend --packages --installer --enable-extra-platforms -f "${{ env.FRAMEWORK }}"
         env:
           SONARR_VERSION: ${{ steps.get_version.outputs.VERSION }}
           BRANCH: ${{ inputs.branch }}
+
+      - name: Install zip tool
+        shell: cmd
+        run: choco install zip -y
 
       - name: Package Archives (.tar.gz / .zip)
         shell: bash
@@ -67,5 +71,6 @@ jobs:
           files: |
             _artifacts/*.tar.gz
             _artifacts/*.zip
+            _artifacts/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
