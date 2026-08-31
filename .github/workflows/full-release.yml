@@ -8,6 +8,10 @@ on:
         required: true
         default: main
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   publish-binaries:
     name: Publish Binaries
