@@ -5,7 +5,7 @@
 This fork is designed to be a drop-in replacement for existing Sonarr docker installations. Simply replace your Sonarr docker image with `ghcr.io/actuallyevan/sonarr:latest`
 
 Sample docker compose:
-```docker
+```yaml
 sonarr:
     image: ghcr.io/actuallyevan/sonarr:latest
     container_name: sonarr
@@ -57,7 +57,8 @@ Found matching series via grab history, but release was matched to series by ID.
 
 This generally happens on indexers that include a tvdbId in releases that Sonarr uses to match against series while downloading. But during imports, if the files are obfuscated or the file/series name doesn't match up with Sonarr's expectations, it blocks automatic import.
  
-⚠️ Only use this setting if you trust your indexers to provide the correct tvdbIds when they're present on releases.
+> [!WARNING]
+> Only use this setting if you trust your indexers to provide the correct tvdbIds when they are present on releases.
 
 #### FIX_ANIME_SEASON_SEARCH
 
