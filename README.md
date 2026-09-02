@@ -1,4 +1,4 @@
-# Sonarr
+# Sonar
 
 ## Installation
 
