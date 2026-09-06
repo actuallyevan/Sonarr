@@ -14,6 +14,9 @@ on:
         required: true
         type: string
         default: main
+      fork_tag:
+        type: string
+        required: false
 
 jobs:
   release:
@@ -31,10 +34,16 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0.0")
-          VERSION="${TAG#v}"
-          echo "TAG_NAME=$TAG" >> "$GITHUB_OUTPUT"
-          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          TAG="${{ inputs.fork_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0.0")
+          fi
+          FORK_VERSION="${TAG#v}"
+          UPSTREAM_VERSION="${FORK_VERSION%%-*}"
+
+          echo "FORK_TAG=$TAG" >> "$GITHUB_OUTPUT"
+          echo "FORK_VERSION=$FORK_VERSION" >> "$GITHUB_OUTPUT"
+          echo "UPSTREAM_VERSION=$UPSTREAM_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Extract Target Framework
         shell: bash
@@ -54,7 +63,7 @@ jobs:
         shell: bash
         run: ./build.sh --backend --frontend --packages -f "${{ env.FRAMEWORK }}"
         env:
-          SONARR_VERSION: ${{ steps.get_version.outputs.VERSION }}
+          SONARR_VERSION: ${{ steps.get_version.outputs.UPSTREAM_VERSION }}
           BRANCH: ${{ inputs.branch }}
 
       - name: Build Windows Installers
@@ -67,8 +76,9 @@ jobs:
           mkdir -p ../../../_output/win-x86/${{ env.FRAMEWORK }}/Sonarr
           cp -r ../../../_artifacts/win-x86/${{ env.FRAMEWORK }}/Sonarr/* ../../../_output/win-x86/${{ env.FRAMEWORK }}/Sonarr/
 
-          export SONARR_VERSION="${{ steps.get_version.outputs.VERSION }}"
-          export SONARR_MAJOR_VERSION="${SONARR_VERSION%%.*}"
+          export SONARR_VERSION="${{ steps.get_version.outputs.FORK_VERSION }}"
+          UPSTREAM_VERSION="${{ steps.get_version.outputs.UPSTREAM_VERSION }}"
+          export SONARR_MAJOR_VERSION="${UPSTREAM_VERSION%%.*}"
           export BRANCH="${{ inputs.branch }}"
           export FRAMEWORK="${{ env.FRAMEWORK }}"
 
@@ -85,13 +95,16 @@ jobs:
         env:
           FRAMEWORK: ${{ env.FRAMEWORK }}
           BRANCH: ${{ inputs.branch }}
-          SONARR_VERSION: ${{ steps.get_version.outputs.VERSION }}
+          SONARR_VERSION: ${{ steps.get_version.outputs.FORK_VERSION }}
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
-          name: Sonarr v${{ steps.get_version.outputs.VERSION }}
+          tag_name: ${{ steps.get_version.outputs.FORK_TAG }}
+          name: Sonarr v${{ steps.get_version.outputs.FORK_VERSION }}
+          body: |
+            Based on upstream Sonarr [v${{ steps.get_version.outputs.UPSTREAM_VERSION }}](https://github.com/Sonarr/Sonarr/releases/tag/v${{ steps.get_version.outputs.UPSTREAM_VERSION }}).
+          generate_release_notes: true
           draft: false
           prerelease: false
           files: |
