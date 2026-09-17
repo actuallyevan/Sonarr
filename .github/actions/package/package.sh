@@ -5,17 +5,16 @@ artifactsFolder=_artifacts
 uiFolder="$outputFolder/UI"
 framework="${FRAMEWORK:=net6.0}"
 
-rm -rf $artifactsFolder
-mkdir $artifactsFolder
+mkdir -p $artifactsFolder
 
-for runtime in _output/*
+for runtime in $artifactsFolder/*
 do
   name="${runtime##*/}"
   folderName="$runtime/$framework"
   sonarrFolder="$folderName/Sonarr"
   archiveName="Sonarr.$BRANCH.$SONARR_VERSION.$name"
 
-  if [[ "$name" == 'UI' ]]; then
+  if [ ! -d "$sonarrFolder" ]; then
     continue
   fi
     

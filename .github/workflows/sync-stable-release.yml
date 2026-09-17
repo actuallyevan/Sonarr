@@ -1,0 +1,86 @@
+name: Sync Official Sonarr Release
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Fetch latest release tag from official Sonarr
+        id: get_release
+        shell: bash
+        run: |
+          # Fetch the latest production release (ignores drafts & pre-releases)
+          RELEASE_JSON=$(curl -sSL "https://api.github.com/repos/Sonarr/Sonarr/releases/latest")
+          TAG_NAME=$(echo "$RELEASE_JSON" | jq -r '.tag_name')
+
+          if [ -z "$TAG_NAME" ] || [ "$TAG_NAME" = "null" ]; then
+            echo "Error: Could not retrieve latest tag from Sonarr/Sonarr"
+            exit 1
+          fi
+
+          echo "LATEST_TAG=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "Found latest official Sonarr release: $TAG_NAME"
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if release tag is already merged
+        id: check_tag
+        shell: bash
+        run: |
+          TAG="${{ steps.get_release.outputs.LATEST_TAG }}"
+          git fetch https://github.com/Sonarr/Sonarr.git tag "$TAG" --no-tags
+          git fetch origin tag "$TAG" --no-tags || true
+
+          if git merge-base --is-ancestor "$TAG" main 2>/dev/null; then
+            echo "Tag $TAG is already included in main."
+            echo "NEW_RELEASE=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag $TAG is NOT in main. New release needed!"
+            echo "NEW_RELEASE=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Sync PR if new release exists
+        if: steps.check_tag.outputs.NEW_RELEASE == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.get_release.outputs.LATEST_TAG }}
+        run: |
+          SYNC_BRANCH="sync-release-${TAG}"
+
+          # Check if PR already exists
+          if gh pr view "$SYNC_BRANCH" >/dev/null 2>&1; then
+            echo "PR for branch $SYNC_BRANCH already exists. Skipping PR creation."
+            exit 0
+          fi
+
+          git fetch https://github.com/Sonarr/Sonarr.git tag "$TAG" --no-tags
+          git checkout -b "$SYNC_BRANCH" "$TAG"
+
+          git push origin "$TAG" || true
+          git push origin "$SYNC_BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$SYNC_BRANCH" \
+            --title "Release Sync: Sonarr ${TAG}" \
+            --body "Automated release sync for upstream Sonarr release \`${TAG}\`."

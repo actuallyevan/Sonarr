@@ -44,7 +44,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _secondFile = new EpisodeFile { Quality = new QualityModel(Quality.Bluray1080p, new Revision(version: 2)), DateAdded = DateTime.Now, Languages = new List<Language> { Language.English } };
 
             var singleEpisodeList = new List<Episode> { new Episode { EpisodeFile = _firstFile, EpisodeFileId = 1 }, new Episode { EpisodeFile = null } };
-            var doubleEpisodeList = new List<Episode> { new Episode { EpisodeFile = _firstFile, EpisodeFileId = 1 }, new Episode { EpisodeFile = _secondFile, EpisodeFileId = 1 }, new Episode { EpisodeFile = null } };
+            var doubleEpisodeList = new List<Episode> { new Episode { EpisodeFile = _firstFile, EpisodeFileId = 1 }, new Episode { EpisodeFile = _secondFile, EpisodeFileId = 1 } };
 
             var fakeSeries = Builder<Series>.CreateNew()
                 .With(c => c.QualityProfile = new QualityProfile
@@ -124,6 +124,16 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _secondFile.Quality = new QualityModel(Quality.SDTV);
         }
 
+        private void WithFirstEpisodeFileMissing()
+        {
+            _parseResultMulti.Episodes[0].EpisodeFileId = 0;
+        }
+
+        private void WithSecondEpisodeFileNull()
+        {
+            _parseResultMulti.Episodes[0] = new Episode { EpisodeFile = null };
+        }
+
         [Test]
         public void should_return_true_if_episode_has_no_existing_file()
         {
@@ -161,17 +171,97 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         }
 
         [Test]
-        public void should_be_not_upgradable_if_only_first_episodes_is_upgradable()
+        public void should_be_not_upgradable_if_only_first_episodes_is_upgradable_and_any_upgradable_is_false()
         {
-            WithFirstFileUpgradable();
+            var previous = Environment.GetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE");
+
+            try
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", "false");
+                WithFirstFileUpgradable();
+                _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeFalse();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", previous);
+            }
+        }
+
+        [Test]
+        public void should_be_upgradable_if_only_first_episodes_is_upgradable_and_any_upgradable_is_true()
+        {
+            var previous = Environment.GetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE");
+
+            try
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", "true");
+                WithFirstFileUpgradable();
+                _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeTrue();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", previous);
+            }
+        }
+
+        [Test]
+        public void should_be_not_upgradable_if_only_second_episodes_is_upgradable_and_any_upgradable_is_not_set()
+        {
+            WithSecondFileUpgradable();
             _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeFalse();
         }
 
         [Test]
-        public void should_be_not_upgradable_if_only_second_episodes_is_upgradable()
+        public void should_be_upgradable_if_only_second_episodes_is_upgradable_and_any_upgradable_is_true()
         {
-            WithSecondFileUpgradable();
-            _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeFalse();
+            var previous = Environment.GetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE");
+
+            try
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", "true");
+                WithSecondFileUpgradable();
+                _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeTrue();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", previous);
+            }
+        }
+
+        [Test]
+        public void should_be_upgradable_if_any_episode_is_missing_and_any_upgradable_is_true()
+        {
+            var previous = Environment.GetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE");
+
+            try
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", "true");
+
+                WithFirstEpisodeFileMissing();
+                _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeTrue();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", previous);
+            }
+        }
+
+        [Test]
+        public void should_be_upgradable_if_any_episodefile_is_null_and_any_upgradable_is_true()
+        {
+            var previous = Environment.GetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE");
+
+            try
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", "true");
+
+                WithSecondEpisodeFileNull();
+                _upgradeDisk.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeTrue();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ACCEPT_RELEASE_ANY_UPGRADABLE", previous);
+            }
         }
 
         [Test]
