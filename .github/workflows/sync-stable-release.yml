@@ -19,6 +19,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Fetch latest release tag from official Sonarr
         id: get_release
@@ -61,14 +62,14 @@ jobs:
         if: steps.check_tag.outputs.NEW_RELEASE == 'true'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.get_release.outputs.LATEST_TAG }}
         run: |
           SYNC_BRANCH="sync-release-${TAG}"
 
-          # Check if PR or branch already exists
-          if git ls-remote --heads origin "$SYNC_BRANCH" | grep -q "$SYNC_BRANCH"; then
-            echo "Branch $SYNC_BRANCH already exists on remote. Skipping PR creation."
+          # Check if PR already exists
+          if gh pr view "$SYNC_BRANCH" >/dev/null 2>&1; then
+            echo "PR for branch $SYNC_BRANCH already exists. Skipping PR creation."
             exit 0
           fi
 
